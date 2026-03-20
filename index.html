@@ -1,1 +1,326 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트 라면 조리 타이머 - 가치있는미래교육연구소</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f8fafc; font-family: 'Pretendard', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 1rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .timer-circle { width: 200px; height: 200px; border-radius: 50%; border: 8px solid #ef4444; display: flex; align-items: center; justify-content: center; font-size: 3rem; font-weight: bold; margin: 0 auto; transition: all 0.3s ease; }
+        .active-step { border-left: 4px solid #ef4444; background: #fee2e2; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8 border-b pb-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">🍜 스마트 라면 조리 타이머</h1>
+                <p class="text-sm text-gray-500">개발자: 가치있는미래교육연구소 대표 김병찬</p>
+            </div>
+            <select id="langSelect" class="p-2 border rounded-md bg-white shadow-sm" onchange="changeLanguage()">
+                <option value="ko">한국어 (Korean)</option>
+                <option value="en">English (영어)</option>
+                <option value="zh">中文 (중국어)</option>
+                <option value="es">Español (스페인어)</option>
+                <option value="de">Deutsch (독일어)</option>
+                <option value="ja">日本語 (일본어)</option>
+                <option value="vi">Tiếng Việt (베트남어)</option>
+            </select>
+        </header>
 
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Left Panel: Settings -->
+            <div class="md:col-span-1 space-y-6">
+                <div class="glass-panel p-6 border">
+                    <h2 class="text-lg font-semibold mb-4" id="label-select-ramen">라면 종류 선택</h2>
+                    <select id="ramenSelect" class="w-full p-3 border rounded-lg mb-4 bg-white" onchange="initRamenInfo()">
+                        <option value="shin">신라면 (Shin Ramyun)</option>
+                        <option value="neoguri">너구리 (Neoguri)</option>
+                        <option value="chapagetti">짜파게티 (Chapagetti)</option>
+                        <option value="jjawang">짜왕 (Jjawang)</option>
+                        <option value="anseong">안성탕면 (Anseongtangmyun)</option>
+                        <option value="buldak">불닭볶음면 (Buldak)</option>
+                        <option value="samiyang">삼양라면 (Samyang)</option>
+                        <option value="jin">진라면 (Jin Ramen)</option>
+                        <option value="bibim">비빔면 (Bibim Men)</option>
+                        <option value="wang">왕뚜껑 (Wang Ttukdeong)</option>
+                    </select>
+
+                    <h2 class="text-lg font-semibold mb-4" id="label-heat-source">열원 선택</h2>
+                    <div class="flex gap-4 mb-4">
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="heat" value="gas" checked class="hidden peer">
+                            <div class="p-3 text-center border rounded-lg peer-checked:bg-red-500 peer-checked:text-white transition" id="label-gas">가스레인지</div>
+                        </label>
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="heat" value="induction" class="hidden peer">
+                            <div class="p-3 text-center border rounded-lg peer-checked:bg-blue-500 peer-checked:text-white transition" id="label-induction">인덕션</div>
+                        </label>
+                    </div>
+
+                    <h2 class="text-lg font-semibold mb-4" id="label-toppings">토핑 추가 (복수 선택)</h2>
+                    <div class="grid grid-cols-2 gap-2 mb-4 text-sm">
+                        <label class="flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-gray-50">
+                            <input type="checkbox" id="topping-tteok"> <span id="label-tteok">떡국떡</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-gray-50">
+                            <input type="checkbox" id="topping-greenonion"> <span id="label-greenonion">대파</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-gray-50">
+                            <input type="checkbox" id="topping-cheese"> <span id="label-cheese">치즈</span>
+                        </label>
+                    </div>
+
+                    <h2 class="text-lg font-semibold mb-2" id="label-egg">계란 설정</h2>
+                    <select id="eggSelect" class="w-full p-2 border rounded-lg bg-white mb-4">
+                        <option value="none" id="label-egg-none">넣지 않음</option>
+                        <option value="soft" id="label-egg-soft">반숙 (부드럽게)</option>
+                        <option value="hard" id="label-egg-hard">완숙 (단단하게)</option>
+                    </select>
+
+                    <button onclick="startCooking()" class="w-full bg-red-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-red-700 transition" id="btn-start-cook">
+                        조리 시작하기
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Panel: Timer & Status -->
+            <div class="md:col-span-2 space-y-6">
+                <div class="glass-panel p-8 border text-center relative min-h-[400px]">
+                    <div id="recipe-summary" class="mb-4 text-red-600 font-bold text-xl italic"></div>
+                    <div id="current-step-title" class="text-2xl font-bold mb-6 text-gray-700">라면을 선택하고 시작 버튼을 눌러주세요.</div>
+                    
+                    <div class="timer-circle mb-8" id="timer-display">00:00</div>
+
+                    <div class="flex justify-center gap-4">
+                        <button id="btn-timer-start" onclick="toggleTimer()" class="hidden px-8 py-3 bg-green-500 text-white rounded-full font-bold shadow-md hover:bg-green-600">단계 시작</button>
+                        <button id="btn-timer-next" onclick="goToNextStep()" class="hidden px-8 py-3 bg-gray-800 text-white rounded-full font-bold shadow-md hover:bg-gray-900">다음 단계로 >></button>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-6 border">
+                    <h2 class="text-lg font-semibold mb-4 border-b pb-2" id="label-process">전체 조리 과정</h2>
+                    <div id="process-list" class="space-y-3">
+                        <!-- Steps will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alarm Audio (Synthetic) -->
+    <audio id="alarmSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
+    <script>
+        // Ramen Data from provided image
+        const ramenData = {
+            shin: { name: "신라면", water: 550, boilTime: 270, recipe: "물 끓이기 -> 면, 분말, 건더기 넣기 -> 4분 30초 -> 대파/계란 추천" },
+            neoguri: { name: "너구리", water: 550, boilTime: 300, recipe: "물 끓이기 -> 면, 스프, 다시마 넣기 -> 5분 -> 해물 풍미 업그레이드" },
+            chapagetti: { name: "짜파게티", water: 600, boilTime: 300, recipe: "물 끓이기 -> 면 익히기(5분) -> 물 버리기(8스푼 남김) -> 비비기" },
+            jjawang: { name: "짜왕", water: 600, boilTime: 300, recipe: "면 익히기 -> 물 일부 제거 -> 유성스프 넣고 비비기" },
+            anseong: { name: "안성탕면", water: 550, boilTime: 270, recipe: "물 끓이기 -> 면, 스프 넣기 -> 4분 30초" },
+            buldak: { name: "불닭볶음면", water: 600, boilTime: 300, recipe: "면 끓이기 -> 물 거의 버리기 -> 액상소스 비비기(30초 볶기)" },
+            samiyang: { name: "삼양라면", water: 550, boilTime: 240, recipe: "전통적 권장 3~4분 -> 햄 풍미 강화" },
+            jin: { name: "진라면", water: 550, boilTime: 240, recipe: "건더기 먼저 우려내기 -> 면 넣고 4분" },
+            bibim: { name: "비빔면", water: 600, boilTime: 180, recipe: "면 삶기 -> 찬물 헹구기 -> 소스 비비기" },
+            wang: { name: "왕뚜껑", water: 0, boilTime: 210, recipe: "뜨거운 물 붓고 3~4분 (컵라면 기준)" }
+        };
+
+        const i18n = {
+            ko: {
+                startCook: "조리 시작하기", selectRamen: "라면 종류 선택", heatSource: "열원 선택", gas: "가스레인지", induction: "인덕션",
+                toppings: "토핑 추가 (복수 선택)", tteok: "떡국떡", onion: "대파", cheese: "치즈", egg: "계란 설정", 
+                none: "넣지 않음", soft: "반숙 (부드럽게)", hard: "완숙 (단단하게)", process: "전체 조리 과정",
+                stepBoil: "물 끓이기", stepMain: "면과 스프 넣고 조리", stepTopping: "토핑 넣기", stepEgg: "계란 넣기", stepFinish: "조리 완료!",
+                btnStepStart: "단계 시작", btnStepNext: "다음 단계로 >>", msgReady: "라면을 선택하고 시작 버튼을 눌러주세요.",
+                msgWater: "물을 끓여주세요.", msgMain: "면과 스프를 넣고 조리하세요.", msgTopping: "준비한 토핑을 넣어주세요.", msgEgg: "계란을 넣고 저어주세요."
+            },
+            en: {
+                startCook: "Start Cooking", selectRamen: "Select Ramen", heatSource: "Heat Source", gas: "Gas Stove", induction: "Induction",
+                toppings: "Add Toppings", tteok: "Rice Cake", onion: "Green Onion", cheese: "Cheese", egg: "Egg Options", 
+                none: "None", soft: "Soft Boiled", hard: "Hard Boiled", process: "Cooking Process",
+                stepBoil: "Boiling Water", stepMain: "Adding Noodles & Sauce", stepTopping: "Adding Toppings", stepEgg: "Adding Egg", stepFinish: "Finished!",
+                btnStepStart: "Start Step", btnStepNext: "Next Step >>", msgReady: "Select ramen and press start.",
+                msgWater: "Boil the water.", msgMain: "Add noodles and powder.", msgTopping: "Add your toppings.", msgEgg: "Add the egg."
+            },
+            // Add other languages as needed...
+            ja: {
+                startCook: "調理開始", selectRamen: "ラーメン選択", heatSource: "熱源選択", gas: "ガスレンジ", induction: "IH調理器",
+                toppings: "トッピング追加", tteok: "トック", onion: "ねぎ", cheese: "チーズ", egg: "卵の設定", 
+                none: "なし", soft: "半熟", hard: "完熟", process: "調理工程",
+                stepBoil: "お湯を沸かす", stepMain: "麺とスープを入れる", stepTopping: "トッピングを入れる", stepEgg: "卵を入れる", stepFinish: "完成！",
+                btnStepStart: "ステップ開始", btnStepNext: "次へ >>", msgReady: "ラーメンを選択してスタートを押してください。",
+                msgWater: "お湯を沸かしてください。", msgMain: "麺とスープを入れてください。", msgTopping: "トッピングを入れてください。", msgEgg: "卵を入れてください。"
+            }
+        };
+
+        let currentLang = 'ko';
+        let currentTimer = null;
+        let timeRemaining = 0;
+        let steps = [];
+        let currentStepIndex = -1;
+        let isPaused = true;
+
+        function changeLanguage() {
+            currentLang = document.getElementById('langSelect').value;
+            const langData = i18n[currentLang] || i18n['en'];
+            
+            document.getElementById('btn-start-cook').innerText = langData.startCook;
+            document.getElementById('label-select-ramen').innerText = langData.selectRamen;
+            document.getElementById('label-heat-source').innerText = langData.heatSource;
+            document.getElementById('label-gas').innerText = langData.gas;
+            document.getElementById('label-induction').innerText = langData.induction;
+            document.getElementById('label-toppings').innerText = langData.toppings;
+            document.getElementById('label-tteok').innerText = langData.tteok;
+            document.getElementById('label-greenonion').innerText = langData.onion;
+            document.getElementById('label-cheese').innerText = langData.cheese;
+            document.getElementById('label-egg').innerText = langData.egg;
+            document.getElementById('label-egg-none').innerText = langData.none;
+            document.getElementById('label-egg-soft').innerText = langData.soft;
+            document.getElementById('label-egg-hard').innerText = langData.hard;
+            document.getElementById('label-process').innerText = langData.process;
+            document.getElementById('btn-timer-start').innerText = langData.btnStepStart;
+            document.getElementById('btn-timer-next').innerText = langData.btnStepNext;
+            
+            if (currentStepIndex === -1) {
+                document.getElementById('current-step-title').innerText = langData.msgReady;
+            }
+        }
+
+        function speak(text) {
+            // Remove emojis from speech string
+            const cleanText = text.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\u200D|\u2640|\u2642|\u2648-\u2653|\u2660|\u2663|\u2665|\u2666|\u2600-\u2B55/g, "");
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            utterance.lang = currentLang === 'ko' ? 'ko-KR' : currentLang;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function initRamenInfo() {
+            const ramen = ramenData[document.getElementById('ramenSelect').value];
+            document.getElementById('recipe-summary').innerText = `✨ ${ramen.name} Recipe Summary: ${ramen.recipe}`;
+        }
+
+        function startCooking() {
+            const ramenId = document.getElementById('ramenSelect').value;
+            const ramen = ramenData[ramenId];
+            const heat = document.querySelector('input[name="heat"]:checked').value;
+            const egg = document.getElementById('eggSelect').value;
+            const hasTteok = document.getElementById('topping-tteok').checked;
+            const langData = i18n[currentLang] || i18n['en'];
+
+            steps = [];
+            
+            // 1. Boiling Water
+            const boilTime = (heat === 'gas' ? 300 : 180);
+            steps.push({ title: langData.stepBoil, time: boilTime, msg: langData.msgWater });
+
+            // 2. Main Cooking
+            let mainTime = ramen.boilTime;
+            
+            // Adjust for toppings
+            if (hasTteok) {
+                steps.push({ title: langData.stepTopping + " (떡)", time: 60, msg: "떡국떡을 넣고 먼저 익혀주세요." });
+                mainTime -= 30; // Reduce main time slightly if pre-boiled
+            }
+
+            steps.push({ title: langData.stepMain, time: mainTime - 60, msg: langData.msgMain });
+
+            // 3. Egg/Cheese (Last 1 minute)
+            if (egg !== 'none' || document.getElementById('topping-cheese').checked) {
+                let eggTime = (egg === 'soft') ? 40 : 60;
+                steps.push({ title: langData.stepEgg + (egg === 'soft' ? " (반숙)" : ""), time: eggTime, msg: langData.msgEgg });
+            } else {
+                steps.push({ title: langData.stepMain + " (마무리)", time: 60, msg: "마지막으로 맛있게 익혀주세요." });
+            }
+
+            currentStepIndex = 0;
+            renderProcess();
+            prepareStep();
+        }
+
+        function renderProcess() {
+            const list = document.getElementById('process-list');
+            list.innerHTML = '';
+            steps.forEach((step, idx) => {
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-lg border transition ${idx === currentStepIndex ? 'active-step' : 'bg-gray-50 opacity-60'}`;
+                div.innerHTML = `<div class="font-bold">${idx + 1}. ${step.title}</div><div class="text-sm text-gray-500">${formatTime(step.time)}</div>`;
+                list.appendChild(div);
+            });
+        }
+
+        function prepareStep() {
+            clearInterval(currentTimer);
+            const step = steps[currentStepIndex];
+            timeRemaining = step.time;
+            isPaused = true;
+            
+            document.getElementById('current-step-title').innerText = step.title;
+            updateTimerDisplay();
+            
+            document.getElementById('btn-timer-start').classList.remove('hidden');
+            document.getElementById('btn-timer-next').classList.add('hidden');
+            
+            renderProcess();
+            speak(step.msg);
+        }
+
+        function toggleTimer() {
+            if (isPaused) {
+                isPaused = false;
+                document.getElementById('btn-timer-start').innerText = "일시 정지";
+                currentTimer = setInterval(() => {
+                    timeRemaining--;
+                    updateTimerDisplay();
+                    if (timeRemaining <= 0) {
+                        clearInterval(currentTimer);
+                        onStepComplete();
+                    }
+                }, 1000);
+            } else {
+                isPaused = true;
+                document.getElementById('btn-timer-start').innerText = "다시 시작";
+                clearInterval(currentTimer);
+            }
+        }
+
+        function onStepComplete() {
+            document.getElementById('alarmSound').play();
+            document.getElementById('btn-timer-start').classList.add('hidden');
+            
+            if (currentStepIndex < steps.length - 1) {
+                document.getElementById('btn-timer-next').classList.remove('hidden');
+                speak("해당 단계가 끝났습니다. 다음 단계를 눌러주세요.");
+            } else {
+                const langData = i18n[currentLang] || i18n['en'];
+                document.getElementById('current-step-title').innerText = langData.stepFinish + " 🍜";
+                speak("모든 조리가 완료되었습니다. 맛있게 드세요!");
+            }
+        }
+
+        function goToNextStep() {
+            currentStepIndex++;
+            prepareStep();
+        }
+
+        function updateTimerDisplay() {
+            document.getElementById('timer-display').innerText = formatTime(timeRemaining);
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // Initialize on load
+        window.onload = () => {
+            initRamenInfo();
+            changeLanguage();
+        };
+    </script>
+</body>
+</html>
